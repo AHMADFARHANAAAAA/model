@@ -1,0 +1,390 @@
+================================================================================
+DEEP KNOWLEDGE TRACING (DKT) - QUICK START GUIDE
+================================================================================
+
+PROJECT PURPOSE:
+Build a Deep Knowledge Tracing model to:
+1. Train on ASSISTments dataset (secondary data)
+2. Test on your web system data (primary data)
+3. Generate personalized learning recommendations
+
+================================================================================
+QUICK START (5 STEPS)
+================================================================================
+
+STEP 1: INSTALL DEPENDENCIES
+------------------------------
+Windows PowerShell:
+  cd "C:\Skripsi\Skripsi\Code\Main Code\DKT_Model"
+  pip install -r requirements.txt
+
+Expected output:
+  Successfully installed torch numpy pandas scikit-learn...
+
+⏱️ Time: ~5-10 minutes (depending on internet speed)
+
+
+STEP 2: PREPARE DATA
+------------------------------
+Linux/Mac:
+  python export_data.py
+
+Windows PowerShell:
+  python export_data.py
+
+This script:
+- Exports interactions from your web database to CSV
+- Copies ASSISTments dataset to data/ folder
+- Verifies data structure
+
+Files created:
+  - data/primary_interactions.csv (from your web system)
+  - data/assistments_2009_2010.csv (from ASSISTments)
+
+⏱️ Time: ~2-5 minutes
+
+
+STEP 3: TRAIN MODEL
+------------------------------
+Linux/Mac:
+  python DKT_Model/train.py
+
+Windows PowerShell:
+  python DKT_Model/train.py
+
+This will:
+- Load ASSISTments dataset
+- Preprocess data and create sequences
+- Build LSTM-based DKT model
+- Train for up to 50 epochs with early stopping
+- Save best model checkpoint
+
+Files created:
+  - checkpoints/dkt_model.pth (trained model)
+  - results/training_history.json (training curves)
+  - results/training_summary.json (metadata)
+  - results/preprocessor.pkl (for inference)
+
+Expected accuracy: 60-75%
+
+⏱️ Time: ~30-60 minutes (GPU: 10-20 minutes)
+
+
+STEP 4: EVALUATE MODEL
+------------------------------
+Linux/Mac:
+  python DKT_Model/evaluate.py
+
+Windows PowerShell:
+  python DKT_Model/evaluate.py
+
+This will:
+- Load trained model
+- Test on your primary dataset
+- Compute metrics: Accuracy, Precision, Recall, AUC
+- Save evaluation results
+
+Output example:
+  Accuracy:  0.7234
+  Precision: 0.7156
+  Recall:    0.8123
+  AUC:       0.7823
+
+Files created:
+  - results/evaluation_metrics.json
+
+⏱️ Time: ~5-10 minutes
+
+
+STEP 5: GENERATE RECOMMENDATIONS
+-------------------------------------
+Linux/Mac:
+  python DKT_Model/predict.py
+
+Windows PowerShell:
+  python DKT_Model/predict.py
+
+This will:
+- Load trained model
+- Run example prediction
+- Generate recommendations for sample student
+
+Example output:
+  Student Mastery: 0.73 (Intermediate)
+  Trend: Improving
+  Recommended Questions: [Q5, Q8, Q12]
+
+⏱️ Time: ~1-2 minutes
+
+
+================================================================================
+INTEGRATION WITH WEB SYSTEM
+================================================================================
+
+After training, integrate the model with your web application:
+
+1. CREATE PYTHON SERVICE
+   File: python/dkt_service.py
+   - Loads trained model
+   - Generates recommendations
+   - Called from Next.js API
+
+2. CREATE API ENDPOINT
+   File: app/api/recommendation/[studentId]/route.ts
+   - Gets student interactions
+   - Calls Python service
+   - Returns recommendations
+
+3. UPDATE LEARNING PAGE
+   File: app/learn/page.tsx
+   - Displays mastery level
+   - Shows recommended questions
+   - Updates after each interaction
+
+4. SETUP RETRAINING
+   Run daily/weekly to keep model current:
+   - Export new interactions
+   - Retrain on updated data
+   - Evaluate on test set
+
+See INTEGRATION_GUIDE.md for detailed code examples
+
+
+================================================================================
+FILE STRUCTURE
+================================================================================
+
+DKT_Model/
+├── config.py                 # Configuration parameters
+├── dkt_model.py             # LSTM model architecture
+├── data_preprocessor.py     # Data loading/preprocessing
+├── train.py                 # Training script
+├── evaluate.py              # Evaluation script
+├── predict.py              # Prediction interface
+├── export_data.py          # Data export utility
+├── quickstart.py           # Interactive quick start
+├── requirements.txt         # Python dependencies
+├── README.md               # Full documentation
+├── INTEGRATION_GUIDE.md    # Detailed integration steps
+├── checkpoints/
+│   └── dkt_model.pth       # Trained model (created)
+├── results/
+│   ├── training_history.json
+│   ├── evaluation_metrics.json
+│   ├── training_summary.json
+│   └── preprocessor.pkl
+└── data/
+    ├── assistments_2009_2010.csv        # Input
+    └── primary_interactions.csv         # Input (from your system)
+
+
+================================================================================
+CONFIGURATION OPTIONS
+================================================================================
+
+Edit config.py to adjust:
+
+MODEL ARCHITECTURE:
+  hidden_size: 128        # LSTM hidden dimension (larger = more powerful)
+  num_layers: 2          # LSTM layers (deeper = more complex patterns)
+  dropout: 0.3           # Dropout (prevent overfitting)
+
+TRAINING:
+  batch_size: 32         # Batch size (smaller = more stable, slower)
+  learning_rate: 0.001   # Learning rate (higher = faster, less stable)
+  num_epochs: 50         # Max epochs (higher = longer training)
+  early_stopping: 10     # Stop if no improvement for N epochs
+  device: 'cuda'         # 'cuda' for GPU, 'cpu' for CPU
+
+DATA:
+  max_sequence_length: 100    # Max interactions per student
+  min_interactions: 5         # Minimum interactions to include
+
+Common adjustments:
+- Slow training? Reduce batch_size or max_sequence_length
+- Low accuracy? Increase hidden_size or num_layers
+- Memory issues? Use 'cpu' instead of 'cuda'
+
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+❌ PROBLEM: "Module not found" errors
+✓ SOLUTION: pip install -r requirements.txt
+
+❌ PROBLEM: "CUDA out of memory"
+✓ SOLUTION: Set device='cpu' in config.py or reduce batch_size
+
+❌ PROBLEM: Model accuracy is low (50-55%)
+✓ SOLUTION:
+  1. Check data quality (many noisy labels?)
+  2. Increase model size: hidden_size = 256
+  3. Train longer: num_epochs = 100
+  4. Lower learning rate: learning_rate = 0.0001
+
+❌ PROBLEM: Training is very slow
+✓ SOLUTION:
+  1. Check if using GPU: device='cuda' (requires NVIDIA GPU + CUDA)
+  2. Reduce batch_size or max_sequence_length
+  3. Use DataLoader with num_workers (if on Linux)
+
+❌ PROBLEM: No data in data/ folder
+✓ SOLUTION: Run export_data.py to export from your database
+
+❌ PROBLEM: evaluation_metrics.json file missing
+✓ SOLUTION:
+  1. Make sure training completed successfully
+  2. Primary dataset must exist at data/primary_interactions.csv
+  3. Run evaluate.py again with proper error messages
+
+
+================================================================================
+UNDERSTANDING THE MODEL
+================================================================================
+
+INPUT:
+  Student interaction history:
+    [(question_1, correct_1), (question_5, correct_0), ...]
+
+PROCESS:
+  Question IDs → Embeddings
+              ↓
+         LSTM Layers (learns patterns)
+              ↓
+      Dense Output Layer
+              ↓
+  Mastery Probability (0.0 to 1.0)
+
+OUTPUT:
+  Probability the student will answer next question correctly
+
+INTERPRETATION:
+  0.0-0.2: Student needs help (low mastery)
+  0.2-0.5: Student is learning (basic mastery)
+  0.5-0.8: Student is proficient (intermediate mastery)
+  0.8-1.0: Student has mastered topic (high mastery)
+
+RECOMMENDATIONS:
+  - Questions with 30-70% probability are "just right" difficulty
+  - Questions with <30% are too hard
+  - Questions with >80% are too easy
+
+
+================================================================================
+EVALUATION METRICS EXPLAINED
+================================================================================
+
+ACCURACY: How often the model is correct
+  - Formula: (Correct Predictions) / (Total Predictions)
+  - Range: 0-1 (1 is perfect)
+  - Good value: >0.70
+
+PRECISION: Of predicted "correct", how many were actually correct?
+  - Formula: TP / (TP + FP)
+  - Range: 0-1
+  - Good value: >0.70
+
+RECALL: Of actual "correct", how many did we predict?
+  - Formula: TP / (TP + FN)
+  - Range: 0-1
+  - Good value: >0.70
+
+AUC: Ability to rank student performance correctly
+  - Formula: Area under ROC curve
+  - Range: 0-1 (1 is perfect, 0.5 is random)
+  - Good value: >0.70
+
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+After completing all 5 steps:
+
+1. REVIEW RESULTS
+   - Check training_history.json (loss should decrease)
+   - Check evaluation_metrics.json (accuracy >70%?)
+   - Review predictions in predict.py output
+
+2. INTEGRATE WITH WEB SYSTEM
+   - Follow steps in INTEGRATION_GUIDE.md
+   - Test with sample students
+   - Deploy to production
+
+3. MONITOR PERFORMANCE
+   - Track metrics over time
+   - Alert if accuracy drops significantly
+   - Retrain periodically with new data
+
+4. THESIS DOCUMENTATION
+   - Document model architecture
+   - Include evaluation metrics
+   - Discuss results and findings
+   - Suggest future improvements
+
+
+================================================================================
+USEFUL COMMANDS
+================================================================================
+
+# Quick start with prompts
+python quickstart.py
+
+# Export data
+python export_data.py
+
+# Train model
+python DKT_Model/train.py
+
+# Evaluate model
+python DKT_Model/evaluate.py
+
+# Generate recommendations
+python DKT_Model/predict.py
+
+# Check GPU availability (PyTorch)
+python -c "import torch; print(torch.cuda.is_available())"
+
+# View training history
+python -c "import json; print(json.dumps(json.load(open('DKT_Model/results/training_history.json')), indent=2))"
+
+
+================================================================================
+SUPPORT & RESOURCES
+================================================================================
+
+Documentation:
+  - README.md - Full technical documentation
+  - INTEGRATION_GUIDE.md - Integration with web system
+  - config.py - Inline comments explaining parameters
+
+Research Papers:
+  - "Deep Knowledge Tracing" (Piech et al., 2015)
+  - https://arxiv.org/abs/1506.05908
+
+Data:
+  - ASSISTments: https://sites.google.com/site/assistmentsdata/home
+  - Your web system: Exported via export_data.py
+
+Learning Resources:
+  - PyTorch Tutorials: https://pytorch.org/tutorials/
+  - LSTM Guide: http://colah.github.io/posts/2015-08-Understanding-LSTMs/
+  - Sequence Modeling: https://github.com/pytorch/examples
+
+
+================================================================================
+REMEMBER
+================================================================================
+
+✓ This model learns from sequential student interactions
+✓ Quality of recommendations depends on quality of training data
+✓ Retrain periodically (weekly/monthly) with new data
+✓ Monitor performance and validate results carefully
+✓ Use for research purposes in your thesis
+✓ Good luck! 🚀
+
+
+================================================================================
+Version: 1.0 | Last Updated: March 2026
+================================================================================
